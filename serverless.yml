@@ -1,0 +1,57 @@
+service: payments-due-aggregation
+
+frameworkVersion: ">=1.2.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: java8
+  
+package:
+  artifact: build/distributions/payments-due-aggregation-1.0.zip
+
+functions:
+  paymentDueWebhookRequest:
+    handler: com.mambu.examples.lambda.webhook.WebHookRequestHandler
+    events:
+      - http:
+          path: loans/payments/due
+          method: post
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+         - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/Repayments"
+
+  repaymentSettlement:
+      handler: com.mambu.examples.lambda.schedule.RepaymentSettlementHandler
+      events:
+        - schedule: 'cron(15 10 ? * 6L *)'
+      iamRoleStatements:
+        - Effect: "Allow"
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/Repayments"
+
+
+resources:
+  Resources:
+    Repayments:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "encodedKey"
+            AttributeType: "S"
+
+        KeySchema:
+          -
+            AttributeName: "encodedKey"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: "5"
+          WriteCapacityUnits: "5"
+        TableName: "Repayments"
