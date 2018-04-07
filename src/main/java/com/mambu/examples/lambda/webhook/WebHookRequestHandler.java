@@ -40,28 +40,10 @@ public class WebHookRequestHandler implements RequestHandler<Map<String, Object>
         AmazonDynamoDB client = AmazonDynamoDBClientBuilder.defaultClient();
         DynamoDB dynamoDB = new DynamoDB(client);
 
-        //createTableIfNotExists(client);
-
         Table table = dynamoDB.getTable(TABLE_NAME);
         table.putItem(new Item()
                 .withPrimaryKey("encodedKey", encodedKey)
                 .withString("encodedKey", encodedKey)
                 .withString("state", status));
-    }
-
-    private void createTableIfNotExists(AmazonDynamoDB dynamoDB) {
-        CreateTableRequest createTableRequest = new CreateTableRequest();
-        createTableRequest.withTableName(TABLE_NAME);
-        createTableRequest.withKeySchema(new KeySchemaElement("encodedKey", KeyType.HASH));
-        createTableRequest.withAttributeDefinitions(Arrays.asList(new AttributeDefinition("encodedKey", ScalarAttributeType.S),
-                new AttributeDefinition("state", ScalarAttributeType.S)));
-        createTableRequest.withProvisionedThroughput(new ProvisionedThroughput(10L, 10L));
-
-        TableUtils.createTableIfNotExists(dynamoDB, createTableRequest);
-        try {
-            TableUtils.waitUntilActive(dynamoDB, TABLE_NAME);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
