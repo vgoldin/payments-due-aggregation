@@ -5,13 +5,16 @@ frameworkVersion: ">=1.2.0 <2.0.0"
 provider:
   name: aws
   runtime: java8
-  
+  environment:
+      TABLE_NAME: "Repayments"
+
 package:
   artifact: build/distributions/payments-due-aggregation-1.0.zip
 
 functions:
   paymentDueWebhookRequest:
     handler: com.mambu.examples.lambda.webhook.WebHookRequestHandler
+    timeout: 30
     events:
       - http:
           path: loans/payments/due
@@ -24,6 +27,7 @@ functions:
 
   repaymentSettlement:
       handler: com.mambu.examples.lambda.schedule.RepaymentSettlementHandler
+      timeout: 30
       events:
         - schedule: 'cron(15 10 ? * 6L *)'
       iamRoleStatements:
