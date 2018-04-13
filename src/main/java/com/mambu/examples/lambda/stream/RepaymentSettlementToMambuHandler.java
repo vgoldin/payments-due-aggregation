@@ -8,30 +8,21 @@ import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.Record;
 import com.amazonaws.services.dynamodbv2.model.ReturnValue;
-import com.amazonaws.services.dynamodbv2.streamsadapter.model.RecordObjectMapper;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.std.DateDeserializers;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.DateSerializer;
 import com.mambu.examples.lambda.stream.model.MambuRepaymentTransaction;
+import com.mambu.examples.lambda.stream.model.Record;
 import com.mambu.examples.lambda.utils.JSONUtil;
 import okhttp3.*;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class RepaymentSettlementToMambuHandler implements RequestHandler<Map<String, Object>, Object> {
     private static final Logger LOG = Logger.getLogger(RepaymentSettlementToMambuHandler.class);
@@ -69,13 +60,7 @@ public class RepaymentSettlementToMambuHandler implements RequestHandler<Map<Str
     private List<Record> parseRecords(Map<String, Object> input) {
         List<Record> records;
         try {
-            RecordObjectMapper om = new RecordObjectMapper();
-            SimpleModule module = new SimpleModule("aws-dynamodb", Version.unknownVersion());
-            module.addSerializer(Date.class, DateSerializer.instance);
-            module.addDeserializer(Date.class, new DateDeserializers.DateDeserializer());
-
-            om.registerModule(module);
-
+            ObjectMapper om = new ObjectMapper();
             om.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
             om.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -111,8 +96,7 @@ public class RepaymentSettlementToMambuHandler implements RequestHandler<Map<Str
         String uri = System.getenv("MAMBU_REPAYMENT_URI");
 
         OkHttpClient client = new OkHttpClient();
-        HttpUrl url = new HttpUrl.Builder()
-                .host(uri)
+        HttpUrl url = HttpUrl.parse(uri).newBuilder()
                 .addPathSegment("loans")
                 .addPathSegment(accountEncodedKey)
                 .build();
@@ -130,15 +114,4 @@ public class RepaymentSettlementToMambuHandler implements RequestHandler<Map<Str
             throw new RuntimeException(e);
         }
     }
-
-    public class UnixTimestampDeserializer extends JsonDeserializer<Date> {
-
-        @Override
-        public Date deserialize(JsonParser parser, DeserializationContext context)
-                throws IOException, JsonProcessingException {
-            String unixTimestamp = parser.getText().trim();
-            return new Date(TimeUnit.SECONDS.toMillis(Long.valueOf(unixTimestamp)));
-        }
-    }
-
 }
