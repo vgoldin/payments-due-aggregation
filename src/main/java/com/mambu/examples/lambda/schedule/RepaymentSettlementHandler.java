@@ -12,9 +12,8 @@ import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mambu.examples.lambda.schedule.model.Repayment;
+import com.mambu.examples.lambda.utils.JSONUtil;
 import com.mambu.examples.lambda.webhook.WebHookRequestHandler;
 import okhttp3.*;
 import org.apache.log4j.Logger;
@@ -52,12 +51,10 @@ public class RepaymentSettlementHandler implements RequestHandler<Map<String, Ob
     }
 
     private void settleRepaymentWithPaymentProvider(Repayment o) {
-        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url("https://webhook.site/1e71a853-abd6-4bfb-b95a-73c28c05827b") // FIXME: move to environment
-                .post(RequestBody.create(JSON, serializeToJSON(o)))
+                .url(System.getenv("PAYMENT_URI"))
+                .post(RequestBody.create(JSONUtil.JSON, JSONUtil.serializeToJSON(o)))
                 .build();
 
         try {
@@ -67,17 +64,6 @@ public class RepaymentSettlementHandler implements RequestHandler<Map<String, Ob
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private String serializeToJSON(Repayment o) {
-        ObjectMapper mapper = new ObjectMapper();
-        String json;
-        try {
-            json = mapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        return json;
     }
 
     private void updateRepaymentStatus(Repayment o) {

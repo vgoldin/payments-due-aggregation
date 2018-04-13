@@ -7,6 +7,8 @@ provider:
   runtime: java8
   environment:
       TABLE_NAME: "Repayments"
+      PAYMENT_URI: "https://webhook.site/1e71a853-abd6-4bfb-b95a-73c28c05827b"
+      MAMBU_REPAYMENT_URI: "https://webhook.site/1e71a853-abd6-4bfb-b95a-73c28c05827b"
 
 package:
   artifact: build/distributions/payments-due-aggregation-1.0.zip
@@ -39,7 +41,16 @@ functions:
             - dynamodb:UpdateItem
           Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/Repayments"
 
-
+  repaymentSettlementMambu:
+      handler: com.mambu.examples.lambda.stream.RepaymentSettlementToMambuHandler
+      timeout: 30
+      events:
+        - stream:
+            type: dynamodb
+            arn:
+              Fn::GetAtt:
+                - Repayments
+                - StreamArn
 resources:
   Resources:
     Repayments:
@@ -58,4 +69,6 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: "5"
           WriteCapacityUnits: "5"
+        StreamSpecification:
+          StreamViewType: "NEW_IMAGE"
         TableName: "Repayments"

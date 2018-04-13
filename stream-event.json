@@ -1,0 +1,36 @@
+{
+  "Records": [
+    {
+      "eventID": "1",
+      "eventVersion": "1.0",
+      "dynamodb": {
+        "Keys": {
+          "encodedKey": {
+            "S": "402832b438384dcf0138384ec2bb0012"
+          }
+        },
+        "NewImage": {
+          "parentAccountKey": {
+            "S": "402832b438384dcf0138384ec0880001"
+          },
+          "encodedKey": {
+            "S": "402832b438384dcf0138384ec2bb0012"
+          },
+          "principalDue": {
+            "S": "190"
+          },
+          "state": {
+            "S": "SETTLED"
+          }
+        },
+        "StreamViewType": "NEW_AND_OLD_IMAGES",
+        "SequenceNumber": "111",
+        "SizeBytes": 26
+      },
+      "awsRegion": "us-west-2",
+      "eventName": "INSERT",
+      "eventSourceARN": "asdasd",
+      "eventSource": "aws:dynamodb"
+    }
+  ]
+}
